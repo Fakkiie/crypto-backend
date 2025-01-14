@@ -1,8 +1,6 @@
 use axum::extract::Json;
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
-use solana_client::client_error::ClientError;
 use solana_client::rpc_client;
 use solana_sdk::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address;
@@ -12,6 +10,7 @@ use std::str::FromStr;
 #[derive(Serialize)]
 pub struct TokenBalance {
     balance: f64,
+    decimals: u8,
     token_mint_address: String,
 }
 
@@ -26,9 +25,6 @@ pub async fn get_token_balance(
 ) -> Result<Json<TokenBalance>, (StatusCode, &'static str)> {
     let rpc_network_url: String = env::var("RPC_NETWORK_URL").unwrap();
     let rpc_network_key: String = env::var("RPC_NETWORK_KEY").unwrap();
-
-    println!("RPC_NETWORK_URL: {}", rpc_network_url);
-    println!("RPC_NETWORK_KEY: {}", rpc_network_key);
 
     if payload.wallet_address.is_empty() || payload.token_mint_address.is_empty() {
         return Err((
@@ -46,7 +42,8 @@ pub async fn get_token_balance(
     if payload.token_mint_address == "So11111111111111111111111111111111111111112" {
         let balance_in_lamports = connection.get_balance(&wallet_address).unwrap();
         return Ok(Json(TokenBalance {
-            balance: balance_in_lamports as f64,
+            balance: balance_in_lamports as f64 / 10u64.pow(9) as f64,
+            decimals: 9,
             token_mint_address: payload.token_mint_address.clone(),
         }));
     }
@@ -59,9 +56,9 @@ pub async fn get_token_balance(
         Ok(balance) => balance,
         Err(e) => {
             if e.to_string().contains("RPC response error -32602") {
-                println!("Zero balance");
                 return Ok(Json(TokenBalance {
                     balance: 0.0,
+                    decimals: 0,
                     token_mint_address: payload.token_mint_address.clone(),
                 }));
             } else {
@@ -74,8 +71,11 @@ pub async fn get_token_balance(
         }
     };
 
+    let amount: f64 =
+        balance.amount.parse::<f64>().unwrap() / 10u64.pow(balance.decimals as u32) as f64;
     Ok(Json(TokenBalance {
-        balance: balance.decimals as f64,
-        token_mint_address: "Hello!".to_string(),
+        balance: amount,
+        decimals: balance.decimals,
+        token_mint_address: payload.token_mint_address.clone(),
     }))
 }
