@@ -14,6 +14,7 @@ solana-sdk = "2.1.8"
 spl-associated-token-account = "6.0.0"
 dotenv = "0.15.0"
 solana-rpc-client-api = "2.1.8"
+tower-http = { version = "0.3", features = ["full"] }
 
 [[bin]]
 name = "crypto-backend"
