@@ -35,6 +35,7 @@ pub async fn get_token_balance(
 
     // Corrected to use debug print for struct
     let endpoint = format!("{}{}", rpc_network_url, rpc_network_key);
+
     let connection = rpc_client::RpcClient::new(endpoint.to_string());
 
     let wallet_address = Pubkey::from_str(&payload.wallet_address).unwrap();

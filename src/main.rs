@@ -29,8 +29,8 @@ async fn main() {
         .route("/", get(|| async { "api test" }))
         .layer(cors);
 
-    // run server on port 8000
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
+    // run server on port 8080
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
     println!("Server running at http://{addr}");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
