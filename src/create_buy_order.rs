@@ -1,10 +1,7 @@
-extern crate dotenv;
-
 use axum::{Extension, Json};
 use rust_decimal::Decimal;
 
 use std::sync::Arc;
-use tokio_postgres::NoTls;
 
 use serde::{Deserialize, Serialize};
 // Add this line to include the cornucopia module

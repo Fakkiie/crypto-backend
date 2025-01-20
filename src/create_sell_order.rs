@@ -1,20 +1,7 @@
-extern crate dotenv;
-use dotenv::dotenv;
-
-use axum::{
-    routing::{delete, get, post, put},
-    Extension, Json, Router,
-};
+use axum::{Extension, Json};
 use rust_decimal::Decimal;
 
-use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio_postgres::NoTls;
-
-use tower_http::{
-    cors::{Any, CorsLayer},
-    limit,
-};
 
 use serde::{Deserialize, Serialize};
 // Add this line to include the cornucopia module
