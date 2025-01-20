@@ -105,8 +105,8 @@ async fn main() {
         )
         .route("/get_limitOrder/:id", get(get_single_limit_order))
         .route("/add_limitOrder", post(add_limit_order))
-        .route("create_sell_order", post(create_sell_order))
-        .route("create_buy_order", post(create_buy_order))
+        .route("/create_sell_order", post(create_sell_order))
+        .route("/create_buy_order", post(create_buy_order))
         .route("/", get(|| async { "api test" }))
         .layer(Extension(client))
         .layer(cors);
