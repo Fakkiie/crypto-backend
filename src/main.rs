@@ -23,6 +23,8 @@ use tower_http::{
 };
 
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, TimestampSeconds};
+use time::PrimitiveDateTime;
 
 use uuid::Uuid;
 
@@ -47,6 +49,8 @@ struct LimitOrder {
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
+    token_address_of_interest: String,
+    created_at: PrimitiveDateTime,
 }
 
 #[derive(Deserialize)]
@@ -59,6 +63,7 @@ struct AddLimitOrder {
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
+    token_address_of_interest: String,
 }
 #[derive(Deserialize)]
 struct UpdateLimitOrder {
@@ -70,6 +75,7 @@ struct UpdateLimitOrder {
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
+    token_address_of_interest: String,
 }
 
 #[tokio::main]
@@ -140,6 +146,8 @@ async fn get_limit_orders(
             token_value: row.tokenvalue,
             sell_type: row.selltype.clone(),
             limit_order_type: row.limitordertype.clone(),
+            token_address_of_interest: row.tokenaddressofinterest.clone(),
+            created_at: row.createdat.clone(),
         })
         .collect();
     Json(limit_orders)
@@ -162,6 +170,7 @@ async fn add_limit_order(
             &payload.token_value,
             &payload.sell_type,
             &payload.limit_order_type,
+            &payload.token_address_of_interest,
         )
         .one()
         .await
@@ -175,6 +184,8 @@ async fn add_limit_order(
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
+        token_address_of_interest: row.tokenaddressofinterest.clone(),
+        created_at: row.createdat.clone(),
     };
     Json(limit_order)
 }
@@ -198,6 +209,8 @@ async fn get_single_limit_order(
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
+        token_address_of_interest: row.tokenaddressofinterest.clone(),
+        created_at: row.createdat.clone(),
     };
     Json(limit_order)
 }
@@ -221,6 +234,8 @@ async fn delete_limit_order(
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
+        token_address_of_interest: row.tokenaddressofinterest.clone(),
+        created_at: row.createdat.clone(),
     };
     Json(limit_order)
 }
@@ -240,6 +255,7 @@ async fn edit_limit_order(
             &payload.token_value,
             &payload.sell_type,
             &payload.limit_order_type,
+            &payload.token_address_of_interest,
             &id,
         )
         .one()
@@ -254,6 +270,8 @@ async fn edit_limit_order(
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
+        token_address_of_interest: row.tokenaddressofinterest.clone(),
+        created_at: row.createdat.clone(),
     };
     Json(limit_order)
 }

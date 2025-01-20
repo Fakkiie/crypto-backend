@@ -1,20 +1,10 @@
 extern crate dotenv;
-use dotenv::dotenv;
 
-use axum::{
-    routing::{delete, get, post, put},
-    Extension, Json, Router,
-};
+use axum::{Extension, Json};
 use rust_decimal::Decimal;
 
-use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio_postgres::NoTls;
-
-use tower_http::{
-    cors::{Any, CorsLayer},
-    limit,
-};
 
 use serde::{Deserialize, Serialize};
 // Add this line to include the cornucopia module
@@ -36,16 +26,17 @@ pub struct LimitOrder {
     limit_order_type: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct AddLimitOrder {
-    //  limit_order_id: String,
+    // limit_order_id: String,
     wallet_address: String,
     buy_token_address: String,
     sell_token_address: String,
     sell_token_amount: Decimal,
     token_value: Decimal,
     sell_type: String,
-    //  limit_order_type: String,
+    // limit_order_type: String,
+    token_address_of_interest: String,
 }
 
 pub async fn create_buy_order(
@@ -63,7 +54,8 @@ pub async fn create_buy_order(
             &payload.sell_token_amount,
             &payload.token_value,
             &payload.sell_type,
-            &String::from("buy"),
+            &"buy".to_string(),
+            &payload.token_address_of_interest,
         )
         .one()
         .await

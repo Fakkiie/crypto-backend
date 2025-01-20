@@ -6,5 +6,7 @@ CREATE TABLE IF NOT EXISTS limitorders (
     sellTokenAmount NUMERIC,
     tokenValue NUMERIC,
     sellType VARCHAR(100),
-    limitOrderType VARCHAR(100)
+    limitOrderType VARCHAR(100),
+    tokenAddressOfInterest VARCHAR(100),
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

@@ -46,6 +46,7 @@ pub struct AddLimitOrder {
     token_value: Decimal,
     sell_type: String,
     //  limit_order_type: String,
+    token_address_of_interest: String,
 }
 
 pub async fn create_sell_order(
@@ -64,6 +65,7 @@ pub async fn create_sell_order(
             &payload.token_value,
             &payload.sell_type,
             &String::from("sell"),
+            &payload.token_address_of_interest,
         )
         .one()
         .await

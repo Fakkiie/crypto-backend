@@ -9,7 +9,9 @@ SELECT
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType 
+    limitOrderType,
+    tokenAddressOfInterest,
+    createdAt 
 FROM limitorders;
 
 --! insert_limitOrder
@@ -21,7 +23,8 @@ INSERT INTO limitorders (
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType
+    limitOrderType,
+    tokenAddressOfInterest
 ) 
 VALUES (
     :limitOrderId,
@@ -31,7 +34,8 @@ VALUES (
     :sellTokenAmount, 
     :tokenValue, 
     :sellType, 
-    :limitOrderType
+    :limitOrderType,
+    :tokenAddressOfInterest
 ) 
 RETURNING 
     limitOrderId, 
@@ -41,7 +45,9 @@ RETURNING
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType;
+    limitOrderType,
+    tokenAddressOfInterest,
+    createdAt;
 
 --! get_limitOrder
 SELECT 
@@ -52,7 +58,9 @@ SELECT
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType 
+    limitOrderType,
+    tokenAddressOfInterest,
+    createdAt 
 FROM limitorders 
 WHERE limitOrderId = :limitOrderId;
 
@@ -65,7 +73,9 @@ SELECT
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType 
+    limitOrderType,
+    tokenAddressOfInterest,
+    createdAt 
 FROM limitorders 
 WHERE walletAddress = :walletAddress;
 
@@ -80,7 +90,9 @@ RETURNING
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType;
+    limitOrderType,
+    tokenAddressOfInterest,
+    createdAt;
 
 --! update_limitOrder
 UPDATE limitorders 
@@ -90,7 +102,8 @@ SET
     sellTokenAmount = :sellTokenAmount, 
     tokenValue = :tokenValue, 
     sellType = :sellType, 
-    limitOrderType = :limitOrderType 
+    limitOrderType = :limitOrderType,
+    tokenAddressOfInterest = :tokenAddressOfInterest 
 WHERE limitOrderId = :limitOrderId
 RETURNING 
     limitOrderId, 
@@ -100,4 +113,6 @@ RETURNING
     sellTokenAmount, 
     tokenValue, 
     sellType, 
-    limitOrderType;
+    limitOrderType,
+    tokenAddressOfInterest,
+    createdAt;

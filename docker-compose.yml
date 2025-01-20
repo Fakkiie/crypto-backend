@@ -19,7 +19,7 @@ services:
       - db
     environment:
       RPC_NETWORK_URL: https://mainnet.helius-rpc.com/?api-key=
-      RPC_NETWORK_KEY: 9470961a-e399-456d-825f-d85539c516f7
+      RPC_NETWORK_KEY: # Your API key here
       DATABASE_URL: postgres://ethank:password@db:5432/crypto
     ports:
       - "8080:8080"
