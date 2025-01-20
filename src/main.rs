@@ -1,11 +1,12 @@
 extern crate dotenv;
 use dotenv::dotenv;
 
-mod get_token_balance;
+mod routes;
+use create_buy_order::create_buy_order;
+use create_sell_order::create_sell_order;
 use get_token_balance::get_token_balance;
-
-mod get_token_price;
 use get_token_price::get_token_price;
+use routes::{create_buy_order, create_sell_order, get_token_balance, get_token_price};
 
 use axum::{
     routing::{delete, get, post, put},
@@ -33,11 +34,6 @@ use cornucopia::queries::limit_orders::{
     delete_limitOrder as db_delete_limitOrder, get_all_limitOrders, get_limitOrder,
     get_limitOrders_by_walletAddress, insert_limitOrder, update_limitOrder,
 };
-
-mod create_sell_order;
-use create_sell_order::create_sell_order;
-mod create_buy_order;
-use create_buy_order::create_buy_order;
 
 #[derive(Serialize, Deserialize)]
 struct LimitOrder {
