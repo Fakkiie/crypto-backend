@@ -1,10 +1,10 @@
 FROM rust:latest as builder
-WORKDIR /usr/src/axum_wasm_postgres
+WORKDIR /usr/src/crypto-backend
 COPY . .
+RUN apt-get update && apt-get install -y libpq-dev
 RUN cargo install --path .
 
-ENV RPC_NETWORK_URL=https://mainnet.helius-rpc.com/?api-key=
-# Add API key here
-ENV RPC_NETWORK_KEY=  
-
-CMD ["cargo", "run", "--release"]
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y ca-certificates libpq-dev && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /usr/local/cargo/bin/crypto-backend /usr/local/bin/crypto-backend
+CMD ["crypto-backend"]

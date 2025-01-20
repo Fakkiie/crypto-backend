@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use solana_client::rpc_client;
 use solana_sdk::pubkey::Pubkey;
 use spl_associated_token_account::get_associated_token_address;
-use std::env;
 use std::str::FromStr;
 
 #[derive(Serialize)]
@@ -23,8 +22,10 @@ pub struct GetTokenBalanceRequest {
 pub async fn get_token_balance(
     Json(payload): Json<GetTokenBalanceRequest>,
 ) -> Result<Json<TokenBalance>, (StatusCode, &'static str)> {
-    let rpc_network_url: String = env::var("RPC_NETWORK_URL").unwrap();
-    let rpc_network_key: String = env::var("RPC_NETWORK_KEY").unwrap();
+    let rpc_network_url: String =
+        std::env::var("RPC_NETWORK_URL").expect("RPC_NETWORK_URL must be set");
+    let rpc_network_key: String =
+        std::env::var("RPC_NETWORK_KEY").expect("RPC_NETWORK_URL must be set");
 
     if payload.wallet_address.is_empty() || payload.token_mint_address.is_empty() {
         return Err((
