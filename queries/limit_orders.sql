@@ -1,118 +1,151 @@
 -- queries/users.sql
 
 --! get_all_limitOrders
-SELECT 
-    limitOrderId, 
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest,
-    createdAt 
-FROM limitorders;
+SELECT
+  limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt
+FROM
+  limitorders;
 
 --! insert_limitOrder
-INSERT INTO limitorders (
-    limitOrderId,
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest
-) 
-VALUES (
-    :limitOrderId,
-    :walletAddress, 
-    :buyTokenAddress, 
-    :sellTokenAddress, 
-    :sellTokenAmount, 
-    :tokenValue, 
-    :sellType, 
-    :limitOrderType,
-    :tokenAddressOfInterest
-) 
-RETURNING 
-    limitOrderId, 
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest,
-    createdAt;
+INSERT INTO
+  limitorders (
+    limitOrderId
+    , walletAddress
+    , buyTokenAddress
+    , sellTokenAddress
+    , sellTokenAmount
+    , tokenValue
+    , sellType
+    , limitOrderType
+    , tokenAddressOfInterest
+    , orderStatus
+  )
+VALUES
+  (
+    :limitOrderId
+    , :walletAddress
+    , :buyTokenAddress
+    , :sellTokenAddress
+    , :sellTokenAmount
+    , :tokenValue
+    , :sellType
+    , :limitOrderType
+    , :tokenAddressOfInterest
+    , :orderStatus
+  ) RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;
 
 --! get_limitOrder
-SELECT 
-    limitOrderId, 
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest,
-    createdAt 
-FROM limitorders 
-WHERE limitOrderId = :limitOrderId;
+SELECT
+  limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt
+FROM
+  limitorders
+WHERE
+  limitOrderId = :limitOrderId;
 
 --! get_limitOrders_by_walletAddress
-SELECT 
-    limitOrderId, 
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest,
-    createdAt 
-FROM limitorders 
-WHERE walletAddress = :walletAddress;
+SELECT
+  limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt
+FROM
+  limitorders
+WHERE
+  walletAddress = :walletAddress
+  AND orderStatus = 'open';
 
 --! delete_limitOrder
-DELETE FROM limitorders 
-WHERE limitOrderId = :limitOrderId 
-RETURNING 
-    limitOrderId, 
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest,
-    createdAt;
+DELETE FROM
+  limitorders
+WHERE
+  limitOrderId = :limitOrderId RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;
 
 --! update_limitOrder
-UPDATE limitorders 
-SET 
-    buyTokenAddress = :buyTokenAddress, 
-    sellTokenAddress = :sellTokenAddress, 
-    sellTokenAmount = :sellTokenAmount, 
-    tokenValue = :tokenValue, 
-    sellType = :sellType, 
-    limitOrderType = :limitOrderType,
-    tokenAddressOfInterest = :tokenAddressOfInterest 
-WHERE limitOrderId = :limitOrderId
-RETURNING 
-    limitOrderId, 
-    walletAddress, 
-    buyTokenAddress, 
-    sellTokenAddress, 
-    sellTokenAmount, 
-    tokenValue, 
-    sellType, 
-    limitOrderType,
-    tokenAddressOfInterest,
-    createdAt;
+UPDATE
+  limitorders
+SET buyTokenAddress = :buyTokenAddress, sellTokenAddress = :sellTokenAddress, sellTokenAmount = :sellTokenAmount, tokenValue = :tokenValue, sellType = :sellType, limitOrderType = :limitOrderType, tokenAddressOfInterest = :tokenAddressOfInterest, orderStatus = :orderStatus
+WHERE
+  limitOrderId = :limitOrderId RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;
+
+--! get_limitOrders_tokens_of_interest
+SELECT DISTINCT
+  tokenAddressOfInterest
+FROM
+  limitorders
+WHERE
+  orderStatus = 'open';
+
+--! get_all_open_limitOrders
+SELECT
+  limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt
+FROM
+  limitorders
+WHERE
+  orderStatus = 'open';

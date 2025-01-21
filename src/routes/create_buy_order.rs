@@ -20,6 +20,7 @@ pub struct LimitOrder {
     sell_token_amount: Decimal,
     token_value: Decimal,
     sell_type: String,
+    order_status: String,
     limit_order_type: String,
 }
 
@@ -53,6 +54,7 @@ pub async fn create_buy_order(
             &payload.sell_type,
             &"buy".to_string(),
             &payload.token_address_of_interest,
+            &String::from("open"),
         )
         .one()
         .await
@@ -66,6 +68,7 @@ pub async fn create_buy_order(
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
+        order_status: row.orderstatus.clone(),
     };
     Json(limit_order)
 }

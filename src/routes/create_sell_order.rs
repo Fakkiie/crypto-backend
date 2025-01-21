@@ -53,6 +53,7 @@ pub async fn create_sell_order(
             &payload.sell_type,
             &String::from("sell"),
             &payload.token_address_of_interest,
+            &String::from("open"),
         )
         .one()
         .await

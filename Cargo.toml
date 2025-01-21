@@ -27,6 +27,7 @@ tokio-postgres = { version = "*", features = [
     "with-uuid-1",
     "with-eui48-1"
 ]}
+postgres_query = "*"
 
 # Solana support 
 solana-client = "2.1.8"

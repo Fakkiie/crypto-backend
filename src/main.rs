@@ -8,6 +8,13 @@ use get_token_balance::get_token_balance;
 use get_token_price::get_token_price;
 use routes::{create_buy_order, create_sell_order, get_token_balance, get_token_price};
 
+mod utils;
+use check_prices::check_prices;
+use process_orders::process_orders;
+use utils::{check_prices, process_orders};
+
+mod custom_types;
+
 use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
@@ -18,16 +25,10 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio_postgres::NoTls;
 
-use tower_http::{
-    cors::{Any, CorsLayer},
-    limit,
-};
+use tower_http::cors::{Any, CorsLayer};
 
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, TimestampSeconds};
 use time::PrimitiveDateTime;
-
-use uuid::Uuid;
 
 mod cornucopia;
 use cornucopia::queries::limit_orders::{
@@ -46,6 +47,7 @@ struct LimitOrder {
     sell_type: String,
     limit_order_type: String,
     token_address_of_interest: String,
+    order_status: String,
     created_at: PrimitiveDateTime,
 }
 
@@ -71,6 +73,7 @@ struct UpdateLimitOrder {
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
+    order_status: String,
     token_address_of_interest: String,
 }
 
@@ -93,6 +96,20 @@ async fn main() {
 
     let client = Arc::new(client);
 
+    // Call check_prices and print the results
+    let client_clone = client.clone();
+    tokio::spawn(async move {
+        loop {
+            let token_prices = check_prices(client_clone.clone()).await;
+            println!("Token Prices: {:?}", token_prices);
+
+            // Process orders using the fetched token prices
+            process_orders(Extension(client_clone.clone()), token_prices).await;
+
+            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await; // Check prices every second
+        }
+    });
+
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)
@@ -110,7 +127,7 @@ async fn main() {
         .route("/create_sell_order", post(create_sell_order))
         .route("/create_buy_order", post(create_buy_order))
         .route("/", get(|| async { "api test" }))
-        .layer(Extension(client))
+        .layer(Extension(client.clone()))
         .layer(cors);
 
     // run server on port 8080
@@ -143,6 +160,7 @@ async fn get_limit_orders(
             sell_type: row.selltype.clone(),
             limit_order_type: row.limitordertype.clone(),
             token_address_of_interest: row.tokenaddressofinterest.clone(),
+            order_status: row.orderstatus.clone(),
             created_at: row.createdat.clone(),
         })
         .collect();
@@ -167,6 +185,7 @@ async fn add_limit_order(
             &payload.sell_type,
             &payload.limit_order_type,
             &payload.token_address_of_interest,
+            &String::from("open"),
         )
         .one()
         .await
@@ -181,6 +200,7 @@ async fn add_limit_order(
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
         token_address_of_interest: row.tokenaddressofinterest.clone(),
+        order_status: row.orderstatus.clone(),
         created_at: row.createdat.clone(),
     };
     Json(limit_order)
@@ -206,6 +226,7 @@ async fn get_single_limit_order(
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
         token_address_of_interest: row.tokenaddressofinterest.clone(),
+        order_status: row.orderstatus.clone(),
         created_at: row.createdat.clone(),
     };
     Json(limit_order)
@@ -231,6 +252,7 @@ async fn delete_limit_order(
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
         token_address_of_interest: row.tokenaddressofinterest.clone(),
+        order_status: row.orderstatus.clone(),
         created_at: row.createdat.clone(),
     };
     Json(limit_order)
@@ -252,6 +274,7 @@ async fn edit_limit_order(
             &payload.sell_type,
             &payload.limit_order_type,
             &payload.token_address_of_interest,
+            &payload.order_status,
             &id,
         )
         .one()
@@ -267,6 +290,7 @@ async fn edit_limit_order(
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
         token_address_of_interest: row.tokenaddressofinterest.clone(),
+        order_status: row.orderstatus.clone(),
         created_at: row.createdat.clone(),
     };
     Json(limit_order)
