@@ -81,6 +81,8 @@ pub async fn process_swap(quote_response: Value) -> Result<(), Box<dyn std::erro
         return Err("Transaction simulation failed".into());
     }
 
+    println!("Broadcasting transaction");
+
     // // Step 5: Send the transaction and wait for confirmation details
     let tx_signature = connection.send_and_confirm_transaction_with_spinner(&signed_transaction)?;
 
