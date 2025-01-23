@@ -7,6 +7,7 @@ SELECT
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -24,6 +25,7 @@ INSERT INTO
     , buyTokenAddress
     , sellTokenAddress
     , sellTokenAmount
+    , sellTokenDecimals
     , tokenValue
     , sellType
     , limitOrderType
@@ -37,6 +39,7 @@ VALUES
     , :buyTokenAddress
     , :sellTokenAddress
     , :sellTokenAmount
+    , :sellTokenDecimals
     , :tokenValue
     , :sellType
     , :limitOrderType
@@ -47,6 +50,7 @@ VALUES
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -61,6 +65,7 @@ SELECT
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -79,6 +84,7 @@ SELECT
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -100,6 +106,7 @@ WHERE
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -117,6 +124,7 @@ WHERE
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -139,6 +147,7 @@ SELECT
   , buyTokenAddress
   , sellTokenAddress
   , sellTokenAmount
+  , sellTokenDecimals
   , tokenValue
   , sellType
   , limitOrderType
@@ -149,3 +158,75 @@ FROM
   limitorders
 WHERE
   orderStatus = 'open';
+
+--! close_limitOrder
+UPDATE
+  limitorders
+SET orderStatus = 'closed'
+WHERE
+  limitOrderId = :limitOrderId RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , sellTokenDecimals
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;
+
+--! pend_limitOrder
+UPDATE
+  limitorders
+SET orderStatus = 'pending'
+WHERE
+  limitOrderId = :limitOrderId RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , sellTokenDecimals
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;
+
+--! complete_limitOrder
+UPDATE
+  limitorders
+SET orderStatus = 'complete'
+WHERE
+  limitOrderId = :limitOrderId RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , sellTokenDecimals
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;
+
+--! error_limitOrder
+UPDATE
+  limitorders
+SET orderStatus = 'error'
+WHERE
+  limitOrderId = :limitOrderId RETURNING limitOrderId
+  , walletAddress
+  , buyTokenAddress
+  , sellTokenAddress
+  , sellTokenAmount
+  , sellTokenDecimals
+  , tokenValue
+  , sellType
+  , limitOrderType
+  , tokenAddressOfInterest
+  , orderStatus
+  , createdAt;

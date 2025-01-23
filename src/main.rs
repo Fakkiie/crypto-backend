@@ -11,12 +11,14 @@ use routes::{create_buy_order, create_sell_order, get_token_balance, get_token_p
 mod utils;
 use check_prices::check_prices;
 use process_orders::process_orders;
-use utils::{check_prices, process_orders};
+use transaction_processor::transaction_processor;
+use utils::{check_prices, process_orders, transaction_processor};
 
 mod custom_types;
+use custom_types::types::LimitOrder;
 
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Extension, Json, Router,
 };
 use rust_decimal::Decimal;
@@ -27,29 +29,29 @@ use tokio_postgres::NoTls;
 
 use tower_http::cors::{Any, CorsLayer};
 
-use serde::{Deserialize, Serialize};
-use time::PrimitiveDateTime;
+use serde::Deserialize;
 
 mod cornucopia;
 use cornucopia::queries::limit_orders::{
     delete_limitOrder as db_delete_limitOrder, get_all_limitOrders, get_limitOrder,
-    get_limitOrders_by_walletAddress, insert_limitOrder, update_limitOrder,
+    insert_limitOrder, update_limitOrder,
 };
 
-#[derive(Serialize, Deserialize)]
-struct LimitOrder {
-    limit_order_id: String,
-    wallet_address: String,
-    buy_token_address: String,
-    sell_token_address: String,
-    sell_token_amount: Decimal,
-    token_value: Decimal,
-    sell_type: String,
-    limit_order_type: String,
-    token_address_of_interest: String,
-    order_status: String,
-    created_at: PrimitiveDateTime,
-}
+// #[derive(Serialize, Deserialize)]
+// struct LimitOrder {
+//     limit_order_id: String,
+//     wallet_address: String,
+//     buy_token_address: String,
+//     sell_token_address: String,
+//     sell_token_amount: Decimal,
+//     sell_token_decimals: i32,
+//     token_value: Decimal,
+//     sell_type: String,
+//     limit_order_type: String,
+//     token_address_of_interest: String,
+//     order_status: String,
+//     created_at: PrimitiveDateTime,
+// }
 
 #[derive(Deserialize)]
 struct AddLimitOrder {
@@ -58,6 +60,7 @@ struct AddLimitOrder {
     buy_token_address: String,
     sell_token_address: String,
     sell_token_amount: Decimal,
+    sell_token_decimals: i32,
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
@@ -70,6 +73,7 @@ struct UpdateLimitOrder {
     buy_token_address: String,
     sell_token_address: String,
     sell_token_amount: Decimal,
+    sell_token_decimals: i32,
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
@@ -96,6 +100,18 @@ async fn main() {
 
     let client = Arc::new(client);
 
+    // Create an MPSC channel with a buffer size of 100 for transactions
+    let (tx_queue, rx_queue) =
+        tokio::sync::mpsc::channel::<crate::custom_types::types::MatchingToken>(100);
+
+    // Spawn the transaction processor task
+    let client_clone_2 = client.clone();
+    tokio::spawn(async move {
+        if let Err(err) = transaction_processor(rx_queue, client_clone_2.clone()).await {
+            eprintln!("Transaction processor error: {:?}", err);
+        }
+    });
+
     // Call check_prices and print the results
     let client_clone = client.clone();
     tokio::spawn(async move {
@@ -104,7 +120,12 @@ async fn main() {
             println!("Token Prices: {:?}", token_prices);
 
             // Process orders using the fetched token prices
-            process_orders(Extension(client_clone.clone()), token_prices).await;
+            process_orders(
+                Extension(client_clone.clone()),
+                token_prices,
+                tx_queue.clone(),
+            )
+            .await;
 
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await; // Check prices every second
         }
@@ -156,6 +177,7 @@ async fn get_limit_orders(
             buy_token_address: row.buytokenaddress.clone(),
             sell_token_address: row.selltokenaddress.clone(),
             sell_token_amount: row.selltokenamount,
+            sell_token_decimals: row.selltokendecimals,
             token_value: row.tokenvalue,
             sell_type: row.selltype.clone(),
             limit_order_type: row.limitordertype.clone(),
@@ -181,6 +203,7 @@ async fn add_limit_order(
             &payload.buy_token_address,
             &payload.sell_token_address,
             &payload.sell_token_amount,
+            &payload.sell_token_decimals,
             &payload.token_value,
             &payload.sell_type,
             &payload.limit_order_type,
@@ -196,6 +219,7 @@ async fn add_limit_order(
         buy_token_address: row.buytokenaddress.clone(),
         sell_token_address: row.selltokenaddress.clone(),
         sell_token_amount: row.selltokenamount,
+        sell_token_decimals: row.selltokendecimals,
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
@@ -222,6 +246,7 @@ async fn get_single_limit_order(
         buy_token_address: row.buytokenaddress.clone(),
         sell_token_address: row.selltokenaddress.clone(),
         sell_token_amount: row.selltokenamount,
+        sell_token_decimals: row.selltokendecimals,
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
@@ -248,6 +273,7 @@ async fn delete_limit_order(
         buy_token_address: row.buytokenaddress.clone(),
         sell_token_address: row.selltokenaddress.clone(),
         sell_token_amount: row.selltokenamount,
+        sell_token_decimals: row.selltokendecimals,
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),
@@ -286,6 +312,7 @@ async fn edit_limit_order(
         buy_token_address: row.buytokenaddress.clone(),
         sell_token_address: row.selltokenaddress.clone(),
         sell_token_amount: row.selltokenamount,
+        sell_token_decimals: row.selltokendecimals,
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
         limit_order_type: row.limitordertype.clone(),

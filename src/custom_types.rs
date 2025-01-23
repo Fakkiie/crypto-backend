@@ -1,1 +1,1 @@
-pub mod token_price;
+pub mod types;

@@ -4,13 +4,13 @@ use std::sync::Arc;
 
 use axum::Extension;
 
-use crate::custom_types::token_price::TokenPrice;
+use crate::custom_types::types::TokenPrice;
 
 use rust_decimal::Decimal;
 use time::PrimitiveDateTime;
 
 use crate::cornucopia;
-use cornucopia::queries::limit_orders::get_all_open_limitOrders;
+use cornucopia::queries::limit_orders::{get_all_open_limitOrders, pend_limitOrder};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct LimitOrder {
@@ -19,6 +19,7 @@ struct LimitOrder {
     buy_token_address: String,
     sell_token_address: String,
     sell_token_amount: Decimal,
+    sell_token_decimals: i32,
     token_value: Decimal,
     sell_type: String,
     limit_order_type: String,
@@ -44,6 +45,7 @@ async fn get_limit_orders(
             buy_token_address: row.buytokenaddress.clone(),
             sell_token_address: row.selltokenaddress.clone(),
             sell_token_amount: row.selltokenamount,
+            sell_token_decimals: row.selltokendecimals,
             token_value: row.tokenvalue,
             sell_type: row.selltype.clone(),
             limit_order_type: row.limitordertype.clone(),
@@ -55,11 +57,40 @@ async fn get_limit_orders(
     limit_orders
 }
 
+async fn set_limit_order_pending(
+    client: Extension<Arc<tokio_postgres::Client>>,
+    limit_order_id: String,
+) -> LimitOrder {
+    let mut stmt = pend_limitOrder();
+    let row = stmt
+        .bind(&**client, &limit_order_id)
+        .one()
+        .await
+        .expect("Failed to execute query");
+
+    let limit_order = LimitOrder {
+        limit_order_id: row.limitorderid.clone(),
+        wallet_address: row.walletaddress.clone(),
+        buy_token_address: row.buytokenaddress.clone(),
+        sell_token_address: row.selltokenaddress.clone(),
+        sell_token_amount: row.selltokenamount,
+        sell_token_decimals: row.selltokendecimals,
+        token_value: row.tokenvalue,
+        sell_type: row.selltype.clone(),
+        limit_order_type: row.limitordertype.clone(),
+        token_address_of_interest: row.tokenaddressofinterest.clone(),
+        order_status: row.orderstatus.clone(),
+        created_at: row.createdat.clone(),
+    };
+    limit_order
+}
+
 pub async fn process_orders(
     client: Extension<Arc<tokio_postgres::Client>>,
     token_prices: Vec<TokenPrice>,
+    tx_queue: tokio::sync::mpsc::Sender<crate::custom_types::types::MatchingToken>,
 ) {
-    let limit_orders = get_limit_orders(client).await;
+    let limit_orders = get_limit_orders(client.clone()).await;
     let token_price_map: std::collections::HashMap<&str, Decimal> = token_prices
         .iter()
         .filter_map(|tp| {
@@ -71,15 +102,15 @@ pub async fn process_orders(
         .collect();
 
     for limit_order in limit_orders {
-        println!(
-            "Processing order: ID={} Wallet={} Token={} Price={} Type={} SellType={}",
-            limit_order.limit_order_id,
-            limit_order.wallet_address,
-            limit_order.token_address_of_interest,
-            limit_order.token_value,
-            limit_order.limit_order_type,
-            limit_order.sell_type
-        );
+        // println!(
+        //     "Processing order: ID={} Wallet={} Token={} Price={} Type={} SellType={}",
+        //     limit_order.limit_order_id,
+        //     limit_order.wallet_address,
+        //     limit_order.token_address_of_interest,
+        //     limit_order.token_value,
+        //     limit_order.limit_order_type,
+        //     limit_order.sell_type
+        // );
         if let Some(&current_price) =
             token_price_map.get(limit_order.token_address_of_interest.as_str())
         {
@@ -130,9 +161,25 @@ pub async fn process_orders(
             };
             if matched {
                 println!(
-                    "Order {} has been matched and processed.",
+                    "Order {} has been matched and queued for processing.",
                     limit_order.limit_order_id
                 );
+
+                let matching_token = crate::custom_types::types::MatchingToken {
+                    limit_order_id: limit_order.limit_order_id.clone(),
+                    wallet_address: limit_order.wallet_address.clone(),
+                    buy_token_address: limit_order.buy_token_address.clone(),
+                    sell_token_address: limit_order.sell_token_address.clone(),
+                    sell_token_amount: limit_order.sell_token_amount,
+                    sell_token_decimals: limit_order.sell_token_decimals,
+                };
+
+                if let Err(e) = tx_queue.send(matching_token).await {
+                    eprintln!("Failed to queue transaction: {}", e);
+                    // Handle transaction error out (send tokens back to user)
+                } else {
+                    set_limit_order_pending(client.clone(), limit_order.limit_order_id).await;
+                }
             }
         } else {
             println!(

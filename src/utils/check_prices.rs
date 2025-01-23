@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use std::sync::Arc;
 
-use crate::custom_types::token_price::TokenPrice;
+use crate::custom_types::types::TokenPrice;
 
 use crate::cornucopia;
 use cornucopia::queries::limit_orders::get_limitOrders_tokens_of_interest;
@@ -27,7 +27,6 @@ pub async fn check_prices(client: Arc<tokio_postgres::Client>) -> Vec<TokenPrice
     }
     let ids = token_ids.join(",");
     let url = format!("https://api.jup.ag/price/v2?ids={}", ids);
-    println!("Fetching token prices from: {}", url);
 
     // Fetch the token prices asynchronously.
     let response = reqwest::get(&url)

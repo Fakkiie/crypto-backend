@@ -3,25 +3,15 @@ use rust_decimal::Decimal;
 
 use std::sync::Arc;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 // Add this line to include the cornucopia module
 
 use cornucopia::queries::limit_orders::insert_limitOrder;
 use uuid::Uuid;
 
-use crate::cornucopia;
+use crate::custom_types::types::LimitOrder;
 
-#[derive(Serialize, Deserialize)]
-pub struct LimitOrder {
-    limit_order_id: String,
-    wallet_address: String,
-    buy_token_address: String,
-    sell_token_address: String,
-    sell_token_amount: Decimal,
-    token_value: Decimal,
-    sell_type: String,
-    limit_order_type: String,
-}
+use crate::cornucopia;
 
 #[derive(Deserialize)]
 pub struct AddLimitOrder {
@@ -30,6 +20,7 @@ pub struct AddLimitOrder {
     buy_token_address: String,
     sell_token_address: String,
     sell_token_amount: Decimal,
+    sell_token_decimals: i32,
     token_value: Decimal,
     sell_type: String,
     //  limit_order_type: String,
@@ -49,6 +40,7 @@ pub async fn create_sell_order(
             &payload.buy_token_address,
             &payload.sell_token_address,
             &payload.sell_token_amount,
+            &payload.sell_token_decimals,
             &payload.token_value,
             &payload.sell_type,
             &String::from("sell"),
@@ -64,9 +56,13 @@ pub async fn create_sell_order(
         buy_token_address: row.buytokenaddress.clone(),
         sell_token_address: row.selltokenaddress.clone(),
         sell_token_amount: row.selltokenamount,
+        sell_token_decimals: row.selltokendecimals,
         token_value: row.tokenvalue,
         sell_type: row.selltype.clone(),
+        token_address_of_interest: row.tokenaddressofinterest.clone(),
         limit_order_type: row.limitordertype.clone(),
+        order_status: row.orderstatus.clone(),
+        created_at: row.createdat.clone(),
     };
     Json(limit_order)
 }

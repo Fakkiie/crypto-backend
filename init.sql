@@ -6,6 +6,7 @@ IF
     , buyTokenAddress VARCHAR(100)
     , sellTokenAddress VARCHAR(100)
     , sellTokenAmount NUMERIC
+    , sellTokenDecimals INTEGER
     , tokenValue NUMERIC
     , sellType VARCHAR(100)
     , limitOrderType VARCHAR(100)
